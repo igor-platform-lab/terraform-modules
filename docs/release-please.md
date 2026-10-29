@@ -16,7 +16,7 @@ Este guia explica como preparar releases deste repositório e consumir seus mód
 
 ## Estado atual do repositório
 
-O [workflow](../.github/workflows/release_please.yaml) executa em pushes para `main` e usa o secret `MY_RELEASE_PLEASE_TOKEN`. A action está fixada no SHA `45996ed1f6d02564a971a2fa1b5860e934307cf7` e consulta dois arquivos na raiz:
+O [workflow](../.github/workflows/release_please.yaml) executa em pushes para `main` e autentica com um token temporário de instalação do GitHub App. A action está fixada no SHA `45996ed1f6d02564a971a2fa1b5860e934307cf7` e consulta dois arquivos na raiz:
 
 | Arquivo | Para que serve |
 | --- | --- |
@@ -31,6 +31,8 @@ Os módulos participantes são `account_baseline`, `eks_access`, `eks_cluster`, 
 
 ### O que fazer no dia a dia
 
+Antes de começar, cadastre `RELEASE_APP_CLIENT_ID` em **Repository variables** e `RELEASE_APP_PRIVATE_KEY` em **Repository secrets**, conforme a seção de autenticação abaixo.
+
 1. Faça uma mudança em um módulo cadastrado e use uma mensagem como `fix(vpc): corrigir composição das tags`.
 2. Depois do merge em `main`, acompanhe a execução e revise o PR de release gerado.
 3. Faça merge do PR de release quando quiser publicar as versões propostas.
@@ -38,7 +40,7 @@ Os módulos participantes são `account_baseline`, `eks_access`, `eks_cluster`, 
 
 O diretório dos arquivos alterados identifica o módulo afetado. O texto `(vpc)` ajuda a leitura, mas sozinho não seleciona o pacote. Para incluir outro módulo, acrescente seu caminho em `packages`, com um `component` único, seguindo o mesmo formato dos existentes.
 
-A configuração local está preparada; a existência do secret, as permissões e a primeira execução no GitHub ainda precisam ser verificadas. As tags usadas neste guia são exemplos, sem confirmação de publicação.
+A configuração local está preparada; a variável, a chave privada, as permissões da instalação e o primeiro ciclo com o App ainda precisam ser verificados no GitHub. As tags usadas neste guia são exemplos, sem confirmação de publicação.
 
 ## Como uma release funciona
 
@@ -71,34 +73,58 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+      - name: Gerar token do GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         with:
-          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Preparar releases
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+        with:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+          token: ${{ steps.app-token.outputs.token }}
 ```
 
-`contents` permite gerenciar conteúdo e releases; `pull-requests`, os PRs; `issues`, operações relacionadas a issues e labels. O exemplo segue o formato de [configuração avançada da action](https://github.com/googleapis/release-please-action#advanced-release-configuration). Não é necessário checkout para essa etapa, que trabalha pela API do GitHub.
+O workflow gera o token e o passa diretamente ao Release Please. As duas actions estão fixadas por SHA. Não é necessário checkout para essas etapas, que usam a API do GitHub. [Configuração do Release Please](https://github.com/googleapis/release-please-action#advanced-release-configuration).
 
-### Secret e permissões
+### Autenticação com GitHub App
 
-1. Prepare um token com acesso ao repositório e permissões de escrita em Contents, Pull requests e Issues, conforme o tipo de token e as políticas da organização.
-2. Salve-o em **Settings → Secrets and variables → Actions**, com o nome `MY_RELEASE_PLEASE_TOKEN`.
-3. Confira as políticas em **Settings → Actions → General**; quando aplicável, habilite a criação de PRs pelo GitHub Actions.
-4. Confira os logs da primeira execução para confirmar o acesso.
+Use um GitHub App instalado na organização `igor-platform-lab`, com acesso ao repositório `terraform-modules`. Nas configurações do App, abra **Permissions & events → Repository permissions** e conceda **Read and write** a Contents, Pull requests e Issues. Depois de salvar, aprove as novas permissões na instalação, quando solicitado, e selecione o repositório. A tela da instalação deve deixar de exibir **No permissions** e **No repositories**. [Alterar permissões](https://docs.github.com/en/apps/maintaining-github-apps/modifying-a-github-app-registration#changing-the-permissions-of-a-github-app).
 
-O bloco `permissions` configura o `GITHUB_TOKEN`; ele não amplia as permissões do PAT passado em `token`. Referência: [credenciais e permissões da action](https://github.com/googleapis/release-please-action#github-credentials).
+A visibilidade do App controla onde ele pode ser instalado: um App privado só pode ser instalado na conta que o possui. Isso é independente da visibilidade dos repositórios. Para manter o App privado na organização, registre-o nela ou transfira a propriedade. [Visibilidade dos Apps](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/making-a-github-app-public-or-private).
 
-O token dedicado também interfere no disparo de outros workflows. Eventos gerados com `GITHUB_TOKEN` têm restrições: atualmente, PRs abertos ou atualizados por ele podem gerar runs que aguardam aprovação, enquanto eventos como push de tag não disparam novas runs. PATs e tokens de instalação de GitHub Apps permitem esses encadeamentos, sujeitos aos gatilhos e políticas configurados. Um merge feito por uma pessoa é um evento distinto. Consulte a [regra atual do GitHub](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+No repositório, abra **Settings → Secrets and variables → Actions** e cadastre:
+
+| Aba e tipo | Nome exato | Valor |
+| --- | --- | --- |
+| Variables → New repository variable | `RELEASE_APP_CLIENT_ID` | Client ID exibido em General do App |
+| Secrets → New repository secret | `RELEASE_APP_PRIVATE_KEY` | Conteúdo completo da chave privada `.pem`, incluindo as linhas BEGIN e END |
+
+Para obter a chave, use **Generate a private key** na área **Private keys** das configurações do App. O Client ID é um identificador; a chave privada é uma credencial e deve permanecer no secret. Não a coloque no YAML, em commits ou na documentação. [Gerenciar chaves privadas](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/managing-private-keys-for-github-apps).
+
+**Repository secret** atende a este workflow. **Environment secret** depende de um job vinculado ao ambiente; **Organization secret** permite compartilhar uma credencial com repositórios selecionados. Não é necessário criar os três. [Tipos de secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
+
+A etapa `app-token` gera um token para o repositório atual, limitado às permissões solicitadas e concedidas à instalação. O token expira após uma hora e é revogado ao final do job por padrão. Ele é consumido por `steps.app-token.outputs.token` e não precisa ser salvo como secret. [Action de token](https://github.com/actions/create-github-app-token).
+
+`permissions: {}` desabilita as permissões opcionais do `GITHUB_TOKEN` neste workflow. As permissões de escrita vêm do token do App; esse bloco não amplia nem substitui as permissões da instalação.
+
+### Alternativa anterior com PAT
+
+O workflow anterior usava `token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}`. Esse nome correspondia a um **Repository secret** com um PAT autorizado para o repositório e escrita em Contents, Pull requests e Issues. O bloco `permissions` do workflow não concedia permissões adicionais ao PAT. Essa opção permanece como referência, mas não é usada pela configuração atual. [Credenciais do Release Please](https://github.com/googleapis/release-please-action#github-credentials).
+
+PATs e tokens de instalação de Apps permitem disparar outros workflows conforme seus eventos e políticas. O `GITHUB_TOKEN` tem restrições próprias: atualmente, determinados eventos de PR podem gerar runs aguardando aprovação, enquanto push de tag feito com esse token não dispara outra run. Um merge feito por uma pessoa é um evento distinto. [Regras atuais de disparo](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 ### Arquivos de versão
 
@@ -169,7 +195,7 @@ module "config" {
 
 O arquivo local `modules/config/main.tf` está vazio nesta revisão. Esse segundo bloco exemplifica somente o endereço de consumo: Config não está cadastrado no manifest e não há implementação funcional de AWS Config nesse arquivo.
 
-O runner de `terraform init` precisa de acesso Git ao repositório, inclusive quando privado. O PAT do workflow de release não é automaticamente disponibilizado ao consumidor; configure autenticação Git por HTTPS ou SSH no ambiente consumidor, sem inserir credenciais no `source`. [Autenticação das fontes Git](https://developer.hashicorp.com/terraform/language/block/module#github-repository).
+O runner de `terraform init` precisa de acesso Git ao repositório, inclusive quando privado. O token do App no workflow de release não é automaticamente disponibilizado ao consumidor; configure autenticação Git por HTTPS ou SSH no ambiente consumidor, sem inserir credenciais no `source`. [Autenticação das fontes Git](https://developer.hashicorp.com/terraform/language/block/module#github-repository).
 
 ### Atualizar o consumidor
 
@@ -209,7 +235,9 @@ Use esta tabela ao acompanhar a primeira execução:
 | --- | --- |
 | Action não é resolvida | SHA informado e políticas de Actions do repositório |
 | Arquivo de configuração não encontrado | O workflow deve apontar para `.release-please-config.json`, com o ponto inicial |
-| Erro de acesso ou criação de PR | Secret, expiração, acesso ao repositório e permissões efetivas do token |
+| Falha ao gerar token do App | Variável `RELEASE_APP_CLIENT_ID`, secret `RELEASE_APP_PRIVATE_KEY`, chave válida e instalação no repositório |
+| Erro de acesso ou criação de PR | Permissões do App e aprovação das permissões na instalação |
+| Instalação mostra No repositories | Configure Repository permissions no App e depois selecione os repositórios na instalação |
 | Execução passa, mas não aparece PR de release | Commits elegíveis desde a última release e mensagem final em `main`; só `docs:` ou `chore:` geralmente não bastam |
 | PR de release existe, mas não há tag | Merge desse PR e logs da execução seguinte em `main` |
 | CI não roda automaticamente no PR do bot | Token utilizado, aprovação pendente e gatilhos do workflow de CI |
