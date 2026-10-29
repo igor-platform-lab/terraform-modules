@@ -1,0 +1,57 @@
+{
+  "release-type": "terraform-module",
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "tag-separator": "-",
+  "separate-pull-requests": false,
+  "packages": {
+    "modules/vpc": {
+      "component": "vpc"
+    },
+    "modules/subnet": {
+      "component": "subnet"
+    },
+    "modules/account_baseline": {
+      "component": "account_baseline"
+    },
+    "modules/eks_access": {
+      "component": "eks_access"
+    },
+    "modules/eks_cluster": {
+      "component": "eks_cluster"
+    },
+    "modules/endpoint_gateway": {
+      "component": "endpoint_gateway"
+    },
+    "modules/endpoint_interface": {
+      "component": "endpoint_interface"
+    },
+    "modules/load_balancer": {
+      "component": "load_balancer"
+    },
+    "modules/load_balancer_listener": {
+      "component": "load_balancer_listener"
+    },
+    "modules/nat_gateway": {
+      "component": "nat_gateway"
+    },
+    "modules/permission_set": {
+      "component": "permission_set"
+    },
+    "modules/s3": {
+      "component": "s3"
+    },
+    "modules/security_group": {
+      "component": "security_group"
+    },
+    "modules/security_group_egress_rule": {
+      "component": "security_group_egress_rule"
+    },
+    "modules/security_group_ingress_rule": {
+      "component": "security_group_ingress_rule"
+    },
+    "modules/target_group": {
+      "component": "target_group"
+    }
+  }
+}
