@@ -52,6 +52,9 @@
     },
     "modules/target_group": {
       "component": "target_group"
+    },
+    "modules/config": {
+      "component": "config"
     }
   }
 }
