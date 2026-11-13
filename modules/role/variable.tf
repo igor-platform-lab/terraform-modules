@@ -50,3 +50,14 @@ variable "statements" {
     error_message = "Cada statement deve conter pelo menos uma action e um resource."
   }
 }
+
+variable "trusted_services" {
+  description = "Auth Services"
+  type        = set(string)
+
+  validation {
+    condition     = length(var.trusted_services) > 0
+    error_message = "At least one service"
+  }
+
+}
