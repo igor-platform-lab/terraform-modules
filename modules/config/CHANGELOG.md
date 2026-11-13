@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/igor-platform-lab/terraform-modules/compare/config-v0.1.0...config-v0.1.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **config:** remova dependencia invalida da organizacao ([d150c0d](https://github.com/igor-platform-lab/terraform-modules/commit/d150c0da500f3954a3b375ca9a48015107c7f46f))
+* **config:** remova dependência inválida da organização ([c8e0314](https://github.com/igor-platform-lab/terraform-modules/commit/c8e03146eef97532d12796a6c8a505028e2a04dd))
+
 ## 0.1.0 (2026-11-11)
 
 
