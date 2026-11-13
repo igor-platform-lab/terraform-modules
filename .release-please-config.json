@@ -55,6 +55,9 @@
     },
     "modules/config": {
       "component": "config"
+    },
+    "modules/role": {
+      "component": "role"
     }
   }
 }
