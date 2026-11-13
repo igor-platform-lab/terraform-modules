@@ -20,5 +20,12 @@ Componentes de terceiros, quando presentes, continuam sujeitos às respectivas
 licenças e avisos. Este documento não altera direitos de terceiros nem revoga
 permissões anteriormente concedidas sob outras licenças.
 
+Além das exceções acima, não é concedida licença gratuita de reutilização
+deste conteúdo. Qualquer
+licença adicional depende de autorização prévia e expressa, por escrito, do
+titular, mediante acordo específico que defina os usos permitidos e as
+condições comerciais, inclusive eventual remuneração. Este aviso, por si só,
+não constitui oferta de licença nem estabelece preço ou condições de compra.
+
 Para solicitar autorização adicional, entre em contato com o titular pelo
 perfil https://github.com/IgorPeli.
