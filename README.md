@@ -4,6 +4,8 @@ Consulte o [guia de Release Please para módulos Terraform](docs/release-please.
 
 O contrato do módulo de IAM Identity Center está em [permission_set](modules/permission_set/README.md).
 
+O contrato da regra organizacional do AWS Config está em [config](modules/config/README.md).
+
 ## Licença e uso
 
 Copyright (c) 2026 IgorPeli. Todos os direitos reservados. O código e a documentação de autoria do titular não são disponibilizados sob licença open source; sua reutilização exige autorização prévia por escrito, ressalvados os direitos legais e os previstos nos Termos de Serviço do GitHub. Consulte o [aviso de direitos reservados](LICENSE.md).
