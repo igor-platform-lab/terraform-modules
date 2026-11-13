@@ -3,11 +3,6 @@ variable "role_name" {
   description = "Nome da IAM role."
 }
 
-variable "assume_role_policy" {
-  type        = string
-  description = "Documento JSON de confiança que define quem pode assumir a role."
-}
-
 variable "policy_name" {
   type        = string
   description = "Nome da policy de permissões."
@@ -49,4 +44,15 @@ variable "statements" {
     ])
     error_message = "Cada statement deve conter pelo menos uma action e um resource."
   }
+}
+
+variable "trusted_services" {
+  description = "Auth Services"
+  type        = set(string)
+
+  validation {
+    condition     = length(var.trusted_services) > 0
+    error_message = "At least one service"
+  }
+
 }
